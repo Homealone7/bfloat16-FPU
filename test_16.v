@@ -13,9 +13,9 @@ reg [6:0] sig_cc;
 
   initial 
     begin
-    inst = 1;
-     A = 16'b 0011111100000000;
-     B = 16'b 0000000000000000;
+    inst = 0; 
+     A = 16'b 0011111000101000;
+     B = 16'b 0011111100110100;
     end
   
   always @(*) begin
@@ -57,7 +57,16 @@ reg [6:0] sig_cc;
 	        C = {sign_c, a[14:0]};
 	    else begin
 		    sig_c = sig_a - sig_b;
-	    	case (sig_c[7:1])
+		if (sig_c[8:1] == 8'b 00000000) shift_sub = 8;
+		else if (sig_c[8:1] == 8'b 00000001) shift_sub = 7;
+		else if (sig_c[8:2] == 7'b 0000001) shift_sub = 6;
+		else if (sig_c[8:3] == 6'b 000001) shift_sub = 5;
+		else if (sig_c[8:4] == 5'b 00001) shift_sub = 4;
+		else if (sig_c[8:5] == 4'b 0001) shift_sub = 3;
+		else if (sig_c[8:6] == 3'b 001) shift_sub = 2;
+		else if (sig_c[8:7] == 2'b 01) shift_sub = 1;
+		else shift_sub = 0;
+	    	/*case (sig_c[7:1])
 		    	7'b 0000000 : shift_sub = 7;
 			    7'b 0000001 : shift_sub = 6;
 			    7'b 000001x : shift_sub = 5;
@@ -68,7 +77,7 @@ reg [6:0] sig_cc;
 			    7'b 1xxxxxx : shift_sub = 0;
 			    default : shift_sub = 0; 
 		    endcase
-		    shift_sub = (sig_c[8] == 0)? shift_sub + 1: shift_sub;
+		    shift_sub = (sig_c[8] == 0)? shift_sub + 1: shift_sub;*/
 		    sig_c = sig_c << shift_sub;
 		    sig_cc = (sig_c[0] == 1)? ((sig_c[1] == 1)? sig_c[7:1] + 1:sig_c[7:1]) : sig_c[7:1];
 		    exp_c = exp_a - shift_sub;
@@ -76,7 +85,7 @@ reg [6:0] sig_cc;
 		end
 	end
 	
-  $display("sig_a = %b, sig_b = %b, /// a = %d, b = %d, C = %b, shift = %d", sig_a, sig_b, a, b, C, shift);
+  $display("sig_c = %b, sig_b = %b, C = %b, shift = %d, shift_sub = %d", sig_c, sig_b, C, shift, shift_sub);
   
   end
   
