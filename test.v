@@ -1,3 +1,5 @@
+`timescale 1ns/1ns
+
 module test_16;
 
 reg inst;
@@ -11,15 +13,77 @@ reg [7:0] exp_a, exp_b, exp_c;
 reg [9:0] sig_a, sig_b, sig_c;
 reg [6:0] sig_cc;
 
+reg comparison;
+reg [15:0] Array1[19:0];
+reg [15:0] Array2[19:0];
+reg [15:0] Output_ref[19:0];
+reg [15:0] Output[19:0];
+reg [4:0] counter;
+//reg [4:0] counter_c;
+reg Inf;
+reg Neg_Inf;
+reg NaN;
+reg Normal;
+
+reg Inf_B;
+reg Neg_Inf_B;
+reg NaN_B;
+reg Normal_B;
+
+reg clk;
+integer i;
+
   initial 
     begin
-    inst = 1;
-     A = 16'b 1000000000000000;
-     B = 16'b 0011111100000000;
-    end
+    inst = 1; 
+	 $readmemb("Array1.txt",Array1);
+    $readmemb("Array2.txt",Array2);
+    $readmemb("Sum.txt",Output_ref);
+	 A <= Array1[0];
+	 B <= Array2[0];
+    counter = 0;
+//	 counter_c = 0;
+	 comparison = 0;
+	 clk = 0;
+	 
+	 end
+
+always begin
+	#10
+	clk = ~clk;
+	end
+
+	class class_A(.num(A), .Inf(Inf), .Neg_Inf(Neg_Inf), .NaN(NaN), .Normal(Normal));
+	class class_B(.num(B), .Inf(Inf_B), .Neg_Inf(Neg_Inf_B), .NaN(NaN_B), .Normal(Normal_B));
+	always @(posedge clk) begin
+		A <= Array1[counter+1];
+		B <= Array2[counter+1];
+		counter <= counter + 1;
+		Output[counter] <= C;
+		$display("C = %b, C_ref = %b", C, Output_ref[counter]);
+		if (counter == 20) begin
+			comparison = 1'b0;
+			for(i=0;i<20;i=i+1) begin
+				if (Output_ref[i] != Output[i]) begin
+				  $display("Mismatch at number %d", i);
+				  comparison = 1'b1;
+				end  
+			end
+			if (comparison == 1'b0) begin
+				$display("\nsuccess :)");
+			end
+			$stop;
+		end
+	end
+  
   
   always @(*) begin
-  
+	
+	if (NAN || NAN_B) 
+		C = 16'b 0111111111000000;
+	else if (Inf || Inf_B || Neg_Inf || Neg_Inf_B)
+	
+  //if (Normal == 1) begin
   //////////// Add or Sub //////////	
 	add_sub = (inst == 1)? 1:0;
   
@@ -38,7 +102,7 @@ reg [6:0] sig_cc;
 	
 	//////////// Add //////////
 	if (add_sub == 1) begin 
-	  if (b == 16'b 0000000000000000)
+	  if (b == 16'b 0000000000000000 || b == 16'b 1000000000000000)
 	    C = a;
 	  else begin
 	    sig_c = sig_a + sig_b;
@@ -53,7 +117,7 @@ reg [6:0] sig_cc;
 	 //////////// Sub //////////
 	if (add_sub == 0) begin 
 		sign_c = (sign == 0)? sign_a: 1'b 1;
-		 if (b == 16'b 0000000000000000)
+		 if (b == 16'b 0000000000000000 || b == 16'b 1000000000000000)
 	        C = {sign_c, a[14:0]};
 	    else begin
 		    sig_c = sig_a - sig_b;
@@ -82,11 +146,13 @@ reg [6:0] sig_cc;
 		    sig_cc = (sig_c[0] == 1)? ((sig_c[1] == 1)? sig_c[7:1] + 1:sig_c[7:1]) : sig_c[7:1];
 		    exp_c = exp_a - shift_sub;
 		    C = {sign_c, exp_c, sig_cc};
+//			 counter_c = counter + 1;
 		end
 	end
 	
   $display("sig_a = %b, sig_b = %b, C = %b, shift = %d, shift_sub = %d", sig_a, sig_b, C, shift, shift_sub);
-  
-  end
+	end
+	//else 
+		//$display("Enter a valid number");  
   
 endmodule 
