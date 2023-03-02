@@ -20,13 +20,11 @@ reg [15:0] Output_ref[19:0];
 reg [15:0] Output[19:0];
 reg [4:0] counter;
 //reg [4:0] counter_c;
-reg Neg_Zero;
 reg Inf;
 reg Neg_Inf;
 reg NaN;
 reg Normal;
 
-reg Neg_Zero_B;
 reg Inf_B;
 reg Neg_Inf_B;
 reg NaN_B;
@@ -55,8 +53,8 @@ always begin
 	clk = ~clk;
 	end
 
-	class class_A(.num(A), .Neg_Zero(Neg_Zero), .Inf(Inf), .Neg_Inf(Neg_Inf), .NaN(NaN), .Normal(Normal));
-	class class_B(.num(B), .Neg_Zero(Neg_Zero_B), .Inf(Inf_B), .Neg_Inf(Neg_Inf_B), .NaN(NaN_B), .Normal(Normal_B));
+	class class_A(.num(A), .Inf(Inf), .Neg_Inf(Neg_Inf), .NaN(NaN), .Normal(Normal));
+	class class_B(.num(B), .Inf(Inf_B), .Neg_Inf(Neg_Inf_B), .NaN(NaN_B), .Normal(Normal_B));
 	always @(posedge clk) begin
 		A <= Array1[counter+1];
 		B <= Array2[counter+1];
@@ -81,7 +79,10 @@ always begin
   
   always @(*) begin
 	
-	if (
+	if (NAN || NAN_B) 
+		C = 16'b 0111111111000000;
+	else if (Inf || Inf_B || Neg_Inf || Neg_Inf_B)
+	
   //if (Normal == 1) begin
   //////////// Add or Sub //////////	
 	add_sub = (inst == 1)? 1:0;
@@ -101,7 +102,7 @@ always begin
 	
 	//////////// Add //////////
 	if (add_sub == 1) begin 
-	  if (b == 16'b 0000000000000000)
+	  if (b == 16'b 0000000000000000 || b == 16'b 1000000000000000)
 	    C = a;
 	  else begin
 	    sig_c = sig_a + sig_b;
@@ -116,7 +117,7 @@ always begin
 	 //////////// Sub //////////
 	if (add_sub == 0) begin 
 		sign_c = (sign == 0)? sign_a: 1'b 1;
-		 if (b == 16'b 0000000000000000)
+		 if (b == 16'b 0000000000000000 || b == 16'b 1000000000000000)
 	        C = {sign_c, a[14:0]};
 	    else begin
 		    sig_c = sig_a - sig_b;
